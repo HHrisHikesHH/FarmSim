@@ -37,85 +37,90 @@ function Spinner() {
   )
 }
 
-function normalizePhone(raw) {
-  const digits = raw.replace(/\D/g, '')
-  if (raw.trim().startsWith('+')) {
-    return `+${digits}`
+function formatAuthError(err) {
+  if (!err) return 'Sign in failed'
+  const code = err.code ?? err.error_code
+  const msg = err.message ?? String(err)
+  if (
+    code === 'validation_failed' ||
+    /not enabled|Unsupported provider/i.test(msg)
+  ) {
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : '(your app URL)'
+    return (
+      'Google sign-in is not enabled in Supabase yet. Open the Supabase dashboard → Authentication → Providers → Google, enable it, and paste your Google OAuth Client ID and Client Secret. Under Authentication → URL Configuration, add ' +
+      origin +
+      ' to Redirect URLs (use the same origin you use to open this app).'
+    )
   }
-  if (digits.length === 10) {
-    return `+91${digits}`
-  }
-  if (digits.length >= 10) {
-    return `+${digits}`
-  }
-  return raw.trim()
+  return msg
 }
 
 export function LoginScreen() {
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [mode, setMode] = useState('signin')
+  const [oauthLoading, setOauthLoading] = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
   const onGoogle = async () => {
     setError('')
-    setLoading(true)
+    setInfo('')
+    setOauthLoading(true)
     try {
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo:
+            typeof window !== 'undefined'
+              ? `${window.location.origin}/`
+              : undefined,
+        },
       })
-      if (err) setError(err.message)
+      if (err) setError(formatAuthError(err))
     } catch (e) {
       setError(e?.message ?? 'Sign in failed')
     } finally {
-      setLoading(false)
+      setOauthLoading(false)
     }
   }
 
-  const onSendOtp = async () => {
+  const onSubmit = async (e) => {
+    e.preventDefault()
     setError('')
-    const normalized = normalizePhone(phone)
-    if (!normalized || normalized.length < 8) {
-      setError('Enter a valid phone number with country code.')
+    setInfo('')
+    const trimmed = email.trim()
+    if (!trimmed || !password) {
+      setError('Enter your email and password.')
       return
     }
-    setLoading(true)
+    setEmailLoading(true)
     try {
-      const { error: err } = await supabase.auth.signInWithOtp({
-        phone: normalized,
-      })
-      if (err) {
-        setError(err.message)
-        return
+      if (mode === 'signin') {
+        const { error: err } = await supabase.auth.signInWithPassword({
+          email: trimmed,
+          password,
+        })
+        if (err) setError(err.message)
+      } else {
+        const { data, error: err } = await supabase.auth.signUp({
+          email: trimmed,
+          password,
+        })
+        if (err) {
+          setError(err.message)
+          return
+        }
+        if (data.user && !data.session) {
+          setInfo('Check your email to confirm your account, then sign in.')
+        }
       }
-      setOtpSent(true)
     } catch (e) {
-      setError(e?.message ?? 'Could not send OTP')
+      setError(e?.message ?? 'Something went wrong')
     } finally {
-      setLoading(false)
-    }
-  }
-
-  const onVerifyOtp = async () => {
-    setError('')
-    const normalized = normalizePhone(phone)
-    if (otp.length !== 6) {
-      setError('Enter the 6-digit code.')
-      return
-    }
-    setLoading(true)
-    try {
-      const { error: err } = await supabase.auth.verifyOtp({
-        phone: normalized,
-        token: otp,
-        type: 'sms',
-      })
-      if (err) setError(err.message)
-    } catch (e) {
-      setError(e?.message ?? 'Verification failed')
-    } finally {
-      setLoading(false)
+      setEmailLoading(false)
     }
   }
 
@@ -139,68 +144,93 @@ export function LoginScreen() {
         <div className="flex flex-col gap-4">
           <button
             type="button"
-            disabled={loading}
+            disabled={oauthLoading || emailLoading}
             onClick={onGoogle}
             className="flex min-h-[44px] w-full items-center justify-center gap-3 rounded-xl border border-border bg-white px-4 py-3 text-sm font-medium text-farmText shadow-sm"
           >
-            {loading ? <Spinner /> : <GoogleIcon />}
+            {oauthLoading ? <Spinner /> : <GoogleIcon />}
             Continue with Google
           </button>
 
-          <div className="flex flex-col gap-3">
-            <label className="sr-only" htmlFor="phone">
-              Phone number
+          <form className="flex flex-col gap-3" onSubmit={onSubmit}>
+            <label className="sr-only" htmlFor="email">
+              Email
             </label>
             <input
-              id="phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="+91 98765 43210"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              id="email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="min-h-[44px] w-full rounded-xl border border-border bg-straw/50 px-4 py-3 text-farmText placeholder:text-muted"
             />
-            {!otpSent ? (
-              <button
-                type="button"
-                disabled={loading}
-                onClick={onSendOtp}
-                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-4 py-3 text-sm font-semibold text-white"
-              >
-                {loading ? <Spinner /> : null}
-                Send OTP
-              </button>
-            ) : (
+            <label className="sr-only" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              autoComplete={
+                mode === 'signin' ? 'current-password' : 'new-password'
+              }
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="min-h-[44px] w-full rounded-xl border border-border bg-straw/50 px-4 py-3 text-farmText placeholder:text-muted"
+            />
+            <button
+              type="submit"
+              disabled={oauthLoading || emailLoading}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-4 py-3 text-sm font-semibold text-white"
+            >
+              {emailLoading ? <Spinner /> : null}
+              {mode === 'signin' ? 'Sign in' : 'Create account'}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-muted">
+            {mode === 'signin' ? (
               <>
-                <label className="sr-only" htmlFor="otp">
-                  One-time password
-                </label>
-                <input
-                  id="otp"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="6-digit OTP"
-                  value={otp}
-                  onChange={(e) =>
-                    setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
-                  }
-                  className="min-h-[44px] w-full rounded-xl border border-border bg-straw/50 px-4 py-3 text-center text-lg tracking-widest text-farmText placeholder:text-muted"
-                />
+                No account?{' '}
                 <button
                   type="button"
-                  disabled={loading}
-                  onClick={onVerifyOtp}
-                  className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-terracotta px-4 py-3 text-sm font-semibold text-white"
+                  className="min-h-[44px] font-medium text-terracotta underline"
+                  onClick={() => {
+                    setMode('signup')
+                    setError('')
+                    setInfo('')
+                  }}
                 >
-                  {loading ? <Spinner /> : null}
-                  Verify
+                  Sign up
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  className="min-h-[44px] font-medium text-terracotta underline"
+                  onClick={() => {
+                    setMode('signin')
+                    setError('')
+                    setInfo('')
+                  }}
+                >
+                  Sign in
                 </button>
               </>
             )}
-          </div>
+          </p>
         </div>
 
+        {info ? (
+          <p className="mt-4 text-center text-sm text-leaf" role="status">
+            {info}
+          </p>
+        ) : null}
         {error ? (
           <p className="mt-4 text-center text-sm text-red-600" role="alert">
             {error}
