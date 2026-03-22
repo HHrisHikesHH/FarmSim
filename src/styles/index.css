@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+@import 'leaflet/dist/leaflet.css';
+@import 'leaflet-draw/dist/leaflet.draw.css';
 
 @tailwind base;
 @tailwind components;
@@ -41,4 +43,229 @@
 
 .animate-page-fade {
   animation: fade 0.2s ease-out;
+}
+
+.leaflet-container {
+  background: #f5ecd1;
+  font-family:
+    'Inter',
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.leaflet-draw-toolbar a {
+  background-color: #ffffff;
+  border-color: #e2d5c0;
+  color: #2c1a0e;
+}
+
+.leaflet-draw-toolbar a:hover {
+  background-color: #f5ecd1;
+}
+
+@keyframes map-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-map-fade-in {
+  animation: map-fade-in 0.6s ease-out forwards;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheet-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.animate-sheet-in {
+  animation: sheet-in 0.3s ease-out both;
+}
+
+.animate-sheet-out {
+  animation: sheet-out 0.25s ease-in both;
+}
+
+@keyframes onboard-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-onboard-in {
+  animation: onboard-in 0.4s ease-out both;
+}
+
+@keyframes vertex-pop {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-vertex-pop {
+  animation: vertex-pop 0.15s ease-out;
+}
+
+@keyframes plot-success-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-plot-pulse-once {
+  animation: plot-success-pulse 0.45s ease-out 1;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-toast-in {
+  animation: toast-in 0.35s ease-out both;
+}
+
+@keyframes shake-input {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+.animate-shake {
+  animation: shake-input 0.35s ease-out;
+}
+
+@keyframes summary-drop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-summary-in {
+  animation: summary-drop 0.45s ease-out both;
+}
+
+@keyframes fab-pulse-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 20px rgba(194, 98, 45, 0.45),
+      0 0 0 0 rgba(194, 98, 45, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 6px 28px rgba(194, 98, 45, 0.55),
+      0 0 0 10px rgba(194, 98, 45, 0);
+  }
+}
+
+.animate-fab-hint {
+  animation: fab-pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes arrow-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+.animate-arrow-bob {
+  animation: arrow-bob 1.2s ease-in-out infinite;
+}
+
+.input-focus-glow:focus {
+  border-color: #c2622d;
+  box-shadow: 0 0 0 3px rgba(194, 98, 45, 0.15);
+  outline: none;
+}
+
+.plot-label-icon {
+  background: none !important;
+  border: none !important;
+}
+
+.plot-label-pill {
+  display: inline-block;
+  min-width: 56px;
+  transform: translate(-50%, -50%);
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 4px 8px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(30, 18, 8, 0.12);
+  white-space: nowrap;
+}
+
+.plot-label-name {
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #2c1a0e;
+}
+
+.plot-label-area {
+  margin-top: 2px;
+  font-size: 0.65rem;
+  color: #7a6550;
+}
+
+.leaflet-container.cursor-crosshair {
+  cursor: crosshair;
 }

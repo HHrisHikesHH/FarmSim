@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { RouterProvider } from 'react-router-dom'
+import '../lib/leafletIconFix.js'
+import { ToastProvider } from '../components/ui/Toast.jsx'
 import { supabase } from '../lib/supabase.js'
 import { useAuthStore } from '../store/useAuthStore.js'
 import { router } from './Router.jsx'
@@ -41,5 +43,9 @@ export default function App() {
     }
   }, [])
 
-  return <RouterProvider router={router} />
+  return (
+    <ToastProvider>
+      <RouterProvider router={router} />
+    </ToastProvider>
+  )
 }
